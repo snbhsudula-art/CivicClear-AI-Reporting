@@ -116,7 +116,8 @@ function ReportReadiness({ report }: { report: Report }) {
 }
 
 function displayExtractedValue(value: string | undefined) {
-  return isUsable(value ?? '') ? value : 'Missing';
+  const normalized = value ?? '';
+  return isUsable(normalized) ? normalized : 'Missing';
 }
 
 function BeforeAfterAI({ report }: { report: Report }) {
@@ -131,7 +132,7 @@ function BeforeAfterAI({ report }: { report: Report }) {
       <article className="card flex flex-col border-[#d5c9b7] bg-[#fbf7ef] p-5 md:p-6">
         <p className="eyebrow text-[#8a681f]">Unstructured report</p>
         <h3 className="mt-2 text-lg font-bold text-[#284b55]">Original Resident Report</h3>
-        <blockquote className="mt-5 flex-1 border-l-2 border-[#c98945] pl-4 text-sm leading-7 text-[#4f6265]">“{report.description || 'Missing'}”</blockquote>
+        <blockquote className="mt-5 flex-1 border-l-2 border-[#c98945] pl-4 text-sm leading-7 text-[#4f6265]">“{report.description.trim() ? report.description : 'Missing'}”</blockquote>
       </article>
       <div className="flex items-center justify-center gap-2 py-1 text-center md:flex-col md:py-0">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dcecef] text-[#1f5362]"><ArrowRight className="rotate-90 md:rotate-0" size={19} /></span>
@@ -141,7 +142,7 @@ function BeforeAfterAI({ report }: { report: Report }) {
         <p className="eyebrow text-[#33717c]">Structured information</p>
         <p className="mt-2 text-xs font-semibold text-[#52716f]">AI Draft — Requires Human Review</p>
         <h3 className="mt-2 text-lg font-bold text-[#284b55]">AI Structured Draft</h3>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="mt-5 grid gap-4">
           <InfoField label="Issue" value={displayExtractedValue(report.issue)} />
           <InfoField label="Location" value={displayExtractedValue(report.summaryLocation)} />
           <InfoField label="Issue Type" value={displayExtractedValue(report.structuredIssueType)} />
