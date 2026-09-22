@@ -16,6 +16,8 @@ type Report = {
 };
 
 const STORAGE_KEY = 'sj-safety-reporter-reports';
+const AUTH_STORAGE_KEY = 'sj-safety-reporter-prototype-access';
+const PROTOTYPE_PASSWORD = 'SJSU2026';
 const seedReport: Report = {
   id: 'SJSR-2048', submittedAt: '2025-04-18T09:42:00', residentName: 'Marcus Lee',
   description: 'There is a large amount of trash and debris blocking the sidewalk near the downtown area. People using wheelchairs and pedestrians have to walk into the street to get around it. I noticed it this morning and it is still there.',
@@ -48,7 +50,7 @@ function PrototypeMark({ dark = false }: { dark?: boolean }) {
   return <div className={`flex items-center gap-2 text-[.68rem] font-semibold ${dark ? 'text-[#d6e6e5]' : 'text-[#52666c]'}`}><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#f2bb67] text-[#1c3f4a]"><Landmark size={12} strokeWidth={2.5} /></span><span>Prototype — Not an Official City of San José Service</span></div>;
 }
 
-function Header() {
+function Header({ onLogout }: { onLogout: () => void }) {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
   const nav = [{ href: '/', label: 'Overview' }, { href: '/submit', label: 'Resident report' }, { href: '/my-report', label: 'My report' }, { href: '/staff', label: 'Staff review' }];
@@ -61,6 +63,7 @@ function Header() {
       <button className="btn btn-ghost btn-sm md:hidden" onClick={() => setOpen(!open)} aria-expanded={open} aria-label="Toggle navigation" data-testid="button-toggle-navigation">{open ? <X size={17} /> : <Menu size={17} />}</button>
       <nav className={`${open ? 'absolute left-3 right-3 top-[65px] flex' : 'hidden'} card flex-col gap-1 p-2 md:static md:flex md:flex-row md:items-center md:border-0 md:bg-transparent md:p-0 md:shadow-none`} aria-label="Primary navigation">
         {nav.map((item) => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={`rounded-md px-3 py-2 text-sm font-semibold no-underline transition-colors ${location === item.href ? 'bg-[#dcecef] text-[#1f5362]' : 'text-[#556569] hover:bg-[#ece8dd] hover:text-[#1f5362]'}`} data-testid={`link-nav-${item.label.toLowerCase().replaceAll(' ', '-')}`}>{item.label}</Link>)}
+        <button type="button" onClick={() => { setOpen(false); onLogout(); }} className="rounded-md px-3 py-2 text-left text-sm font-semibold text-[#7d4b3f] transition-colors hover:bg-[#f3d9d4] md:text-center" data-testid="button-logout">Log out</button>
       </nav>
     </div>
   </header>;
@@ -70,8 +73,8 @@ function Footer() {
   return <footer className="mt-16 border-t border-[#cfd8d5] bg-[#e7eee9]"><div className="shell-width flex flex-col gap-4 py-7 text-sm text-[#52666c] md:flex-row md:items-center md:justify-between"><PrototypeMark /><p className="max-w-xl text-xs leading-5">This class prototype does not send reports to the real City of San José. It demonstrates how AI could organize information for human review.</p></div></footer>;
 }
 
-function Shell({ children }: { children: ReactNode }) {
-  return <div className="app-shell noise"><Header /><main>{children}</main><Footer /></div>;
+function Shell({ children, onLogout }: { children: ReactNode; onLogout: () => void }) {
+  return <div className="app-shell noise"><Header onLogout={onLogout} /><main>{children}</main><Footer /></div>;
 }
 
 function Home() {
@@ -146,10 +149,57 @@ function NotFound() {
   return <div className="shell-width py-24 text-center"><p className="eyebrow text-[#33717c]">Page not found</p><h1 className="display mt-3 text-5xl text-[#1e4350]">That path is not on the map.</h1><Link href="/" className="btn btn-primary mt-7 no-underline" data-testid="link-back-home">Back to overview</Link></div>;
 }
 
-function Router() {
-  return <Shell><Switch><Route path="/" component={Home} /><Route path="/submit" component={Submit} /><Route path="/confirmation" component={Confirmation} /><Route path="/my-report" component={MyReport} /><Route path="/staff" component={Staff} /><Route component={NotFound} /></Switch></Shell>;
+function Router({ onLogout }: { onLogout: () => void }) {
+  return <Shell onLogout={onLogout}><Switch><Route path="/" component={Home} /><Route path="/submit" component={Submit} /><Route path="/confirmation" component={Confirmation} /><Route path="/my-report" component={MyReport} /><Route path="/staff" component={Staff} /><Route component={NotFound} /></Switch></Shell>;
+}
+
+function LoginScreen({ onAuthenticated }: { onAuthenticated: () => void }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (password === PROTOTYPE_PASSWORD) {
+      sessionStorage.setItem(AUTH_STORAGE_KEY, 'true');
+      onAuthenticated();
+      return;
+    }
+    setError('Incorrect password. Please try again.');
+    setPassword('');
+  };
+
+  return <main className="soft-grid flex min-h-[100dvh] items-center justify-center px-5 py-12">
+    <div className="page-enter w-full max-w-md">
+      <div className="mb-7 flex justify-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1f5362] text-[#f9e4b2] shadow-[0_8px_0_rgba(31,83,98,.13)]"><ShieldCheck size={28} /></span>
+      </div>
+      <section className="card p-7 md:p-9">
+        <div className="text-center">
+          <h1 className="display mt-3 text-4xl leading-tight text-[#1e4350]">San José Homelessness Safety Reporter</h1>
+          <p className="eyebrow mt-4 text-[#33717c]">Prototype Access</p>
+          <p className="mt-4 text-sm leading-6 text-[#617174]">Enter the prototype password to continue to the resident and City staff demo.</p>
+        </div>
+        <form onSubmit={submit} className="mt-8">
+          <label className="field-label" htmlFor="prototype-password">Password</label>
+          <input id="prototype-password" type="password" autoComplete="off" autoFocus className="field-input" placeholder="Enter prototype password" value={password} onChange={(event) => { setPassword(event.target.value); setError(''); }} aria-describedby={error ? 'prototype-password-error' : undefined} data-testid="input-prototype-password" />
+          {error && <p id="prototype-password-error" className="mt-3 text-sm font-semibold text-[#873d34]" role="alert">{error}</p>}
+          <button type="submit" className="btn btn-primary mt-6 w-full" data-testid="button-access-prototype">Access Prototype <ArrowRight size={17} /></button>
+        </form>
+        <div className="mt-7 border-t border-[#d8dfda] pt-5 text-center">
+          <PrototypeMark />
+        </div>
+      </section>
+    </div>
+  </main>;
 }
 
 export default function App() {
-  return <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter>;
+  const [authenticated, setAuthenticated] = useState(() => sessionStorage.getItem(AUTH_STORAGE_KEY) === 'true');
+  const login = () => setAuthenticated(true);
+  const logout = () => {
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    setAuthenticated(false);
+  };
+
+  return <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>{authenticated ? <Router onLogout={logout} /> : <LoginScreen onAuthenticated={login} />}</WouterRouter>;
 }
