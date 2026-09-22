@@ -46,6 +46,75 @@ function StatusBadge({ status }: { status: Status }) {
   return <span className={`badge ${tone}`} data-testid={`status-${status.toLowerCase().replaceAll(' ', '-')}`}>{status}</span>;
 }
 
+function isUsable(value: string, allowOther = true) {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized || normalized === 'unknown' || normalized === 'not sure') return false;
+  if (!allowOther && normalized === 'other') return false;
+  return true;
+}
+
+function getReportReadiness(report: Report) {
+  const issue = isUsable(report.issue);
+  const location = isUsable(report.summaryLocation);
+  const issueType = isUsable(report.structuredIssueType, false);
+  const urgency = isUsable(report.structuredUrgency, false);
+  const description = isUsable(report.description) || isUsable(report.structuredDescription);
+  const previousCityAction = isUsable(report.previousCityAction);
+  const exactLocation = location && /address|street|st\.|avenue|ave\.|road|rd\.|way|cross|intersection|\d{2,}/i.test(report.summaryLocation);
+  const score = Math.round(
+    (issue ? 15 : 0) +
+    (location ? (exactLocation ? 20 : 17) : 0) +
+    (issueType ? 15 : 0) +
+    (urgency ? 10 : 0) +
+    (description ? 25 : 0) +
+    (previousCityAction ? 15 : 0),
+  );
+  const missing = [
+    ...(!exactLocation ? ['Exact address'] : []),
+    ...(!previousCityAction ? ['Previous City action'] : []),
+  ];
+  return {
+    score,
+    found: [
+      { label: 'Issue clearly described', complete: issue && description },
+      { label: 'Location identified', complete: location },
+      { label: 'Safety concern identified', complete: issueType },
+      { label: 'Time reported', complete: Boolean(report.submittedAt && !Number.isNaN(new Date(report.submittedAt).getTime())) },
+    ],
+    missing,
+  };
+}
+
+function ReportReadiness({ report }: { report: Report }) {
+  const readiness = getReportReadiness(report);
+  return <section className="card overflow-hidden border-[#7da9a7] bg-[#e3efeb]" data-testid="report-readiness">
+    <div className="flex flex-col gap-5 border-b border-[#bfd6d0] bg-[#d6e9e3] px-5 py-5 sm:flex-row sm:items-end sm:justify-between md:px-7">
+      <div>
+        <p className="eyebrow text-[#33717c]">AI-generated assessment</p>
+        <h2 className="mt-2 text-xl font-bold text-[#1f5362]">Report readiness</h2>
+      </div>
+      <div className="flex items-end gap-3">
+        <span className="font-mono text-4xl font-medium leading-none text-[#1f5362]" data-testid="text-readiness-score">{readiness.score}%</span>
+        <span className="pb-1 text-xs font-semibold text-[#52716f]">ready for review</span>
+      </div>
+    </div>
+    <div className="px-5 py-5 md:px-7">
+      <div className="mb-6 h-2 overflow-hidden rounded-full bg-[#bdd3cc]"><div className="h-full rounded-full bg-[#33717c] transition-all" style={{ width: `${readiness.score}%` }} /></div>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div>
+          <p className="eyebrow text-[#33717c]">AI found</p>
+          <ul className="mt-3 space-y-2">{readiness.found.map((item) => <li key={item.label} className={`flex items-start gap-2 text-sm ${item.complete ? 'text-[#2d5e58]' : 'text-[#806b3a]'}`}><span className="mt-0.5 font-bold">{item.complete ? '✓' : '⚠'}</span><span>{item.label}</span></li>)}</ul>
+        </div>
+        <div>
+          <p className="eyebrow text-[#8a681f]">Missing information</p>
+          <ul className="mt-3 space-y-2">{readiness.missing.length > 0 ? readiness.missing.map((item) => <li key={item} className="flex items-start gap-2 text-sm text-[#705a2d]"><span className="mt-0.5 font-bold">⚠</span><span>{item}</span></li>) : <li className="text-sm text-[#2d5e58]">No key fields are missing.</li>}</ul>
+        </div>
+      </div>
+      <p className="mt-6 border-t border-[#bfd6d0] pt-4 text-xs leading-5 text-[#52716f]">Report readiness indicates how much information was successfully extracted. A human City employee must still review the report.</p>
+    </div>
+  </section>;
+}
+
 function PrototypeMark({ dark = false }: { dark?: boolean }) {
   return <div className={`flex items-center gap-2 text-[.68rem] font-semibold ${dark ? 'text-[#d6e6e5]' : 'text-[#52666c]'}`}><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#f2bb67] text-[#1c3f4a]"><Landmark size={12} strokeWidth={2.5} /></span><span>Prototype — Not an Official City of San José Service</span></div>;
 }
@@ -102,7 +171,7 @@ function Submit() {
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
   const submit = (event: FormEvent) => { event.preventDefault(); setProcessing(true); setTimeout(() => {
     const isAccessConcern = form.issueType === 'Trash / debris' || form.issueType === 'Blocked sidewalk';
-    const next: Report = { ...seedReport, ...form, id: `SJSR-${Math.floor(2050 + Math.random() * 800)}`, submittedAt: new Date().toISOString(), status: 'AI Structured', description: form.description, location: form.location, issueType: form.issueType, urgency: form.urgency, issue: isAccessConcern ? 'Blocked sidewalk / debris' : form.issueType, summaryLocation: form.location, structuredIssueType: isAccessConcern ? 'Public safety / accessibility' : form.issueType, structuredUrgency: form.urgency, structuredDescription: isAccessConcern ? 'Sidewalk access may be affected by the reported condition.' : form.description, missingInformation: ['Exact address or nearest cross street', 'Whether the walkway is completely blocked', 'Whether this was reported to the City before'], previousCityAction: 'Unknown', humanEdits: '', reviewNote: '' };
+    const next: Report = { ...seedReport, ...form, id: `SJSR-${Math.floor(2050 + Math.random() * 800)}`, submittedAt: new Date().toISOString(), status: 'AI Structured', description: form.description, location: form.location, issueType: form.issueType, urgency: form.urgency, issue: isAccessConcern ? 'Blocked sidewalk / debris' : form.issueType, summaryLocation: form.location, structuredIssueType: isAccessConcern ? 'Public safety / accessibility' : form.issueType, structuredUrgency: form.urgency, structuredDescription: isAccessConcern ? (form.description.trim() ? 'Sidewalk access may be affected by the reported condition.' : '') : form.description, missingInformation: ['Exact address or nearest cross street', 'Whether the walkway is completely blocked', 'Whether this was reported to the City before'], previousCityAction: 'Unknown', humanEdits: '', reviewNote: '' };
     const current = loadReports(); localStorage.setItem(STORAGE_KEY, JSON.stringify([next, ...current.filter((report) => report.id !== next.id)])); setProcessing(false); setLocation('/confirmation');
   }, 1350); };
   if (processing) return <div className="page-enter shell-width flex min-h-[65vh] items-center justify-center py-16"><div className="card w-full max-w-xl p-8 text-center md:p-12"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#dcecef] text-[#1f5362]"><Sparkles className="pulse-dot" size={29} /></div><p className="eyebrow mt-7 text-[#33717c]">One moment</p><h1 className="display mt-3 text-4xl text-[#1e4350]">AI is organizing your report…</h1><p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#647376]">It is separating what you observed from what still needs confirmation. No details are being invented.</p><div className="mx-auto mt-8 h-1.5 max-w-xs overflow-hidden rounded-full bg-[#d4e3df]"><div className="progress-fill h-full w-1/2 rounded-full bg-[#33717c]" /></div></div></div>;
