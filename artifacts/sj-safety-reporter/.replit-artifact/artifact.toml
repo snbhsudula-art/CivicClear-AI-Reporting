@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "San José Homelessness Safety Reporter"
+description = "A civic AI prototype that turns resident reports into structured summaries, highlights missing information, and keeps a human City worker in control of review and approval."
+version = "1.0.0"
+id = "artifacts/sj-safety-reporter"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21576
+
+[services.development]
+run = "pnpm --filter @workspace/sj-safety-reporter run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/sj-safety-reporter", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/sj-safety-reporter/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21576"
+BASE_PATH = "/"
