@@ -115,6 +115,49 @@ function ReportReadiness({ report }: { report: Report }) {
   </section>;
 }
 
+function displayExtractedValue(value: string | undefined) {
+  return isUsable(value ?? '') ? value : 'Missing';
+}
+
+function BeforeAfterAI({ report }: { report: Report }) {
+  const missingItems = report.missingInformation.filter((item) => isUsable(item));
+  return <section className="mt-8" data-testid="before-after-ai">
+    <div className="mb-5">
+      <p className="eyebrow text-[#33717c]">Transformation view</p>
+      <h2 className="display mt-2 text-3xl text-[#1e4350]">Before &amp; After AI</h2>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-[#617174]">See how the resident’s own words become a structured draft without filling in facts that were not provided.</p>
+    </div>
+    <div className="grid items-stretch gap-4 md:grid-cols-[1fr_120px_1fr]">
+      <article className="card flex flex-col border-[#d5c9b7] bg-[#fbf7ef] p-5 md:p-6">
+        <p className="eyebrow text-[#8a681f]">Unstructured report</p>
+        <h3 className="mt-2 text-lg font-bold text-[#284b55]">Original Resident Report</h3>
+        <blockquote className="mt-5 flex-1 border-l-2 border-[#c98945] pl-4 text-sm leading-7 text-[#4f6265]">“{report.description || 'Missing'}”</blockquote>
+      </article>
+      <div className="flex items-center justify-center gap-2 py-1 text-center md:flex-col md:py-0">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dcecef] text-[#1f5362]"><ArrowRight className="rotate-90 md:rotate-0" size={19} /></span>
+        <span className="eyebrow max-w-[110px] text-[#33717c]">AI structured extraction</span>
+      </div>
+      <article className="card border-[#7da9a7] bg-[#edf3ef] p-5 md:p-6">
+        <p className="eyebrow text-[#33717c]">Structured information</p>
+        <p className="mt-2 text-xs font-semibold text-[#52716f]">AI Draft — Requires Human Review</p>
+        <h3 className="mt-2 text-lg font-bold text-[#284b55]">AI Structured Draft</h3>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <InfoField label="Issue" value={displayExtractedValue(report.issue)} />
+          <InfoField label="Location" value={displayExtractedValue(report.summaryLocation)} />
+          <InfoField label="Issue Type" value={displayExtractedValue(report.structuredIssueType)} />
+          <InfoField label="Urgency" value={displayExtractedValue(report.structuredUrgency)} />
+          <InfoField label="Description" value={displayExtractedValue(report.structuredDescription)} wide />
+          <InfoField label="Previous City Action" value={displayExtractedValue(report.previousCityAction)} />
+        </div>
+        <div className="mt-5 border-t border-[#cbded8] pt-4">
+          <p className="eyebrow text-[#8a681f]">Missing Information</p>
+          {missingItems.length > 0 ? <ul className="mt-2 space-y-1 text-sm leading-6 text-[#705a2d]">{missingItems.map((item) => <li key={item}>• {item}</li>)}</ul> : <p className="mt-2 text-sm text-[#2d5e58]">Missing</p>}
+        </div>
+      </article>
+    </div>
+  </section>;
+}
+
 function PrototypeMark({ dark = false }: { dark?: boolean }) {
   return <div className={`flex items-center gap-2 text-[.68rem] font-semibold ${dark ? 'text-[#d6e6e5]' : 'text-[#52666c]'}`}><span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#f2bb67] text-[#1c3f4a]"><Landmark size={12} strokeWidth={2.5} /></span><span>Prototype — Not an Official City of San José Service</span></div>;
 }
@@ -186,7 +229,7 @@ function Timeline({ report, compact = false }: { report: Report; compact?: boole
 
 function Confirmation() {
   const report = loadReports()[0] ?? seedReport;
-  return <div className="page-enter shell-width py-12 md:py-16"><div className="mx-auto max-w-3xl"><div className="card overflow-hidden"><div className="bg-[#1f5362] px-6 py-10 text-[#f7f2e7] md:px-10"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#9dd2c2] text-[#1f5362]"><Check size={25} strokeWidth={2.5} /></div><p className="eyebrow mt-7 text-[#b9d9d5]">Report received in this prototype</p><h1 className="display mt-2 text-4xl md:text-5xl">Your report has been received.</h1><p className="mt-4 max-w-lg leading-7 text-[#d8e8e3]">Thank you, {report.residentName.split(' ')[0]}. Your observation is now a structured record for a human City worker to review.</p></div><div className="p-6 md:p-10"><div className="grid gap-4 sm:grid-cols-3"><div><p className="eyebrow text-[#73817d]">Report ID</p><p className="mt-2 font-mono text-sm font-semibold text-[#1f5362]" data-testid="text-report-id">{report.id}</p></div><div><p className="eyebrow text-[#73817d]">Submitted</p><p className="mt-2 text-sm font-semibold text-[#304f56]" data-testid="text-submitted-date">{formatDate(report.submittedAt, true)}</p></div><div><p className="eyebrow text-[#73817d]">Status</p><div className="mt-2"><StatusBadge status="Awaiting City Review" /></div></div></div><div className="my-8 divider" /><ReportReadiness report={report} /><div className="mt-8 rounded-md border border-[#a9c5c3] bg-[#edf3ef] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><p className="eyebrow text-[#33717c]">AI Draft · structured summary</p><span className="badge bg-[#dcecef] text-[#245667]">Needs human review</span></div><div className="mt-5 grid gap-5 sm:grid-cols-2"><InfoField label="Issue" value={report.issue} /><InfoField label="Location" value={report.summaryLocation} /><InfoField label="Issue type" value={report.structuredIssueType} /><InfoField label="Urgency" value={report.structuredUrgency} /><InfoField label="Description" value={report.structuredDescription} wide /><InfoField label="Previous City Action" value={report.previousCityAction} /></div><div className="mt-5 border-t border-[#cbded8] pt-4"><p className="eyebrow text-[#8a681f]">Missing information</p><ul className="mt-2 space-y-1 text-sm leading-6 text-[#705a2d]">{report.missingInformation.map((item) => <li key={item}>• {item}</li>)}</ul><p className="mt-4 text-sm font-semibold text-[#425c60]">AI suggested department: {report.suggestedDepartment}</p></div></div><div className="mt-8"><Timeline report={{ ...report, status: 'AI Structured' }} /></div><div className="mt-7 rounded-md border border-[#e4c477] bg-[#fff7df] p-4 text-sm leading-6 text-[#73581e]"><strong>Important:</strong> This class prototype does not send reports to the real City of San José. Human review is required before action.</div><div className="mt-7 flex flex-wrap gap-3"><Link href="/my-report" className="btn btn-primary no-underline" data-testid="link-view-my-report">View my report <ArrowRight size={16} /></Link><Link href="/staff" className="btn btn-ghost no-underline" data-testid="link-switch-to-staff">Switch to staff review</Link></div></div></div></div></div>;
+  return <div className="page-enter shell-width py-12 md:py-16"><div className="mx-auto max-w-3xl"><div className="card overflow-hidden"><div className="bg-[#1f5362] px-6 py-10 text-[#f7f2e7] md:px-10"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#9dd2c2] text-[#1f5362]"><Check size={25} strokeWidth={2.5} /></div><p className="eyebrow mt-7 text-[#b9d9d5]">Report received in this prototype</p><h1 className="display mt-2 text-4xl md:text-5xl">Your report has been received.</h1><p className="mt-4 max-w-lg leading-7 text-[#d8e8e3]">Thank you, {report.residentName.split(' ')[0]}. Your observation is now a structured record for a human City worker to review.</p></div><div className="p-6 md:p-10"><div className="grid gap-4 sm:grid-cols-3"><div><p className="eyebrow text-[#73817d]">Report ID</p><p className="mt-2 font-mono text-sm font-semibold text-[#1f5362]" data-testid="text-report-id">{report.id}</p></div><div><p className="eyebrow text-[#73817d]">Submitted</p><p className="mt-2 text-sm font-semibold text-[#304f56]" data-testid="text-submitted-date">{formatDate(report.submittedAt, true)}</p></div><div><p className="eyebrow text-[#73817d]">Status</p><div className="mt-2"><StatusBadge status="Awaiting City Review" /></div></div></div><div className="my-8 divider" /><ReportReadiness report={report} /><BeforeAfterAI report={report} /><div className="mt-8 rounded-md border border-[#a9c5c3] bg-[#edf3ef] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><p className="eyebrow text-[#33717c]">AI Draft · structured summary</p><span className="badge bg-[#dcecef] text-[#245667]">Needs human review</span></div><div className="mt-5 grid gap-5 sm:grid-cols-2"><InfoField label="Issue" value={report.issue} /><InfoField label="Location" value={report.summaryLocation} /><InfoField label="Issue type" value={report.structuredIssueType} /><InfoField label="Urgency" value={report.structuredUrgency} /><InfoField label="Description" value={report.structuredDescription} wide /><InfoField label="Previous City Action" value={report.previousCityAction} /></div><div className="mt-5 border-t border-[#cbded8] pt-4"><p className="eyebrow text-[#8a681f]">Missing information</p><ul className="mt-2 space-y-1 text-sm leading-6 text-[#705a2d]">{report.missingInformation.map((item) => <li key={item}>• {item}</li>)}</ul><p className="mt-4 text-sm font-semibold text-[#425c60]">AI suggested department: {report.suggestedDepartment}</p></div></div><div className="mt-8"><Timeline report={{ ...report, status: 'AI Structured' }} /></div><div className="mt-7 rounded-md border border-[#e4c477] bg-[#fff7df] p-4 text-sm leading-6 text-[#73581e]"><strong>Important:</strong> This class prototype does not send reports to the real City of San José. Human review is required before action.</div><div className="mt-7 flex flex-wrap gap-3"><Link href="/my-report" className="btn btn-primary no-underline" data-testid="link-view-my-report">View my report <ArrowRight size={16} /></Link><Link href="/staff" className="btn btn-ghost no-underline" data-testid="link-switch-to-staff">Switch to staff review</Link></div></div></div></div></div>;
 }
 
 function MyReport() {
