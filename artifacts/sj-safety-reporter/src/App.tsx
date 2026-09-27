@@ -120,6 +120,65 @@ function displayExtractedValue(value: string | undefined) {
   return isUsable(normalized) ? normalized : 'Missing';
 }
 
+function residentExcerpt(text: string, priority?: RegExp) {
+  const sentences = text.trim().split(/(?<=[.!?])\s/);
+  const sentence = (priority ? sentences.find((part) => priority.test(part)) : undefined) ?? sentences[0] ?? '';
+  if (sentence.length <= 145) return sentence;
+  const shortened = sentence.slice(0, 142);
+  return `${shortened.slice(0, shortened.lastIndexOf(' '))}…`;
+}
+
+function fieldExplanation(report: Report, field: 'issue' | 'location' | 'type' | 'urgency' | 'missing', item?: string) {
+  const excerpt = residentExcerpt(report.description);
+  if (field === 'issue') {
+    return excerpt
+      ? `The resident wrote: “${excerpt}” Compare the draft issue with their words; it has not been independently verified.`
+      : isUsable(report.issueType)
+        ? `The resident selected “${report.issueType}” as the issue type, but provided no description to support a more specific issue label.`
+        : 'The resident did not provide a description to support this draft issue. A person must verify it.';
+  }
+  if (field === 'location') {
+    return isUsable(report.location)
+      ? `The resident entered “${report.location}” as the location. This is their submitted location, not a verified address.`
+      : 'The resident did not enter a location. Check their original description before using this draft location.';
+  }
+  if (field === 'type') {
+    return isUsable(report.issueType)
+      ? `The resident selected “${report.issueType}”. The structured issue type is a draft categorization for human review.`
+      : 'The resident did not select a specific issue type. This draft category needs human review.';
+  }
+  if (field === 'urgency') {
+    const urgencyEvidence = residentExcerpt(report.description, /street|injur|emergen|danger|pedestrian/i);
+    return isUsable(report.urgency, false)
+      ? `The resident selected “${report.urgency}” as urgency.${urgencyEvidence ? ` Their description says: “${urgencyEvidence}”` : ''} ${report.structuredUrgency !== report.urgency ? 'The draft urgency differs from their selection and needs review.' : 'No independent urgency assessment was made.'}`
+      : 'The resident did not choose a specific urgency. The draft urgency needs human review.';
+  }
+  if (item && /address|cross street|intersection/i.test(item)) {
+    return isUsable(report.location)
+      ? `The resident entered “${report.location}” as the location. Check their original description to see whether it adds the address detail requested here.`
+      : 'No location was entered in the location field. Check the resident’s original description for address details.';
+  }
+  if (item && /reported to the city|previous city action/i.test(item)) {
+    return 'Previous City action was not separately supplied. Check the resident’s original description before asking for it.';
+  }
+  return 'The draft flags this detail for confirmation. Check the resident’s original description; this information has not been verified.';
+}
+
+function WhyExplanation({ explanation, name }: { explanation: string; name: string }) {
+  const [open, setOpen] = useState(false);
+  return <div className={`min-w-0 max-w-full ${open ? 'w-full' : ''}`} data-testid={`why-${name}`}>
+    <button type="button" aria-label={`Why? AI explanation for ${name.replaceAll('-', ' ')}`} aria-expanded={open} aria-controls={`explanation-${name}`} onClick={() => setOpen(!open)} className="rounded-md border border-[#b7d1ca] bg-white px-2 py-0.5 text-xs font-semibold text-[#286071] hover:bg-[#dcecef] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#286071]">Why?</button>
+    {open && <p id={`explanation-${name}`} className="mt-2 rounded-md border border-[#b7d1ca] bg-[#f8fbf8] p-3 text-xs font-normal leading-5 text-[#3e5960]"><strong className="block text-[#1f5362]">AI explanation · resident-provided information only</strong>{explanation}</p>}
+  </div>;
+}
+
+function ExplainableField({ label, value, explanation, name }: { label: string; value: string; explanation: string; name: string }) {
+  return <div className="min-w-0 border-b border-[#d4e2dd] pb-3">
+    <div className="flex flex-wrap items-center gap-2"><p className="eyebrow text-[#73817d]">{label}</p><WhyExplanation name={name} explanation={explanation} /></div>
+    <p className="mt-1 break-words text-sm font-semibold leading-6 text-[#304f56]">{value}</p>
+  </div>;
+}
+
 function BeforeAfterAI({ report }: { report: Report }) {
   const missingItems = report.missingInformation.filter((item) => isUsable(item));
   return <section className="mt-8" data-testid="before-after-ai">
@@ -143,16 +202,16 @@ function BeforeAfterAI({ report }: { report: Report }) {
         <p className="mt-2 text-xs font-semibold text-[#52716f]">AI Draft — Requires Human Review</p>
         <h3 className="mt-2 text-lg font-bold text-[#284b55]">AI Structured Draft</h3>
         <div className="mt-5 grid gap-4">
-          <InfoField label="Issue" value={displayExtractedValue(report.issue)} />
-          <InfoField label="Location" value={displayExtractedValue(report.summaryLocation)} />
-          <InfoField label="Issue Type" value={displayExtractedValue(report.structuredIssueType)} />
-          <InfoField label="Urgency" value={displayExtractedValue(report.structuredUrgency)} />
+          <ExplainableField label="Issue" value={displayExtractedValue(report.issue)} name="issue" explanation={fieldExplanation(report, 'issue')} />
+          <ExplainableField label="Location" value={displayExtractedValue(report.summaryLocation)} name="location" explanation={fieldExplanation(report, 'location')} />
+          <ExplainableField label="Issue Type" value={displayExtractedValue(report.structuredIssueType)} name="type" explanation={fieldExplanation(report, 'type')} />
+          <ExplainableField label="Urgency" value={displayExtractedValue(report.structuredUrgency)} name="urgency" explanation={fieldExplanation(report, 'urgency')} />
           <InfoField label="Description" value={displayExtractedValue(report.structuredDescription)} wide />
           <InfoField label="Previous City Action" value={displayExtractedValue(report.previousCityAction)} />
         </div>
         <div className="mt-5 border-t border-[#cbded8] pt-4">
-          <p className="eyebrow text-[#8a681f]">Missing Information</p>
-          {missingItems.length > 0 ? <ul className="mt-2 space-y-1 text-sm leading-6 text-[#705a2d]">{missingItems.map((item) => <li key={item}>• {item}</li>)}</ul> : <p className="mt-2 text-sm text-[#2d5e58]">Missing</p>}
+          <div className="flex flex-wrap items-center gap-2"><p className="eyebrow text-[#8a681f]">Missing Information</p><WhyExplanation name="missing-information" explanation="These draft flags ask a person to check details against the resident’s submission. No outside records were consulted." /></div>
+          {missingItems.length > 0 ? <ul className="mt-2 space-y-2 text-sm leading-6 text-[#705a2d]">{missingItems.map((item, index) => <li key={`${item}-${index}`} className="flex flex-wrap items-start gap-2"><span className="min-w-0 flex-1">• {item}</span><WhyExplanation name={`missing-${index}`} explanation={fieldExplanation(report, 'missing', item)} /></li>)}</ul> : <p className="mt-2 text-sm text-[#2d5e58]">Missing</p>}
         </div>
       </article>
     </div>
