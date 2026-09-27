@@ -1,0 +1,1 @@
+- [Workflow stage meaning](workflow-stage-meaning.md) — completing the missing-information check means gaps were identified, not resolved; only human action completes the decision.
