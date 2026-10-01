@@ -1,0 +1,97 @@
+I want to make several UI and workflow improvements to the existing CIVICCLEAR prototype.
+
+IMPORTANT:
+- Do not remove or weaken any of the existing TRACE red-team fixes.
+- Keep the current contradiction detection, clarification workflow, hazard detection, human-review requirement, and routing hold behavior intact.
+- Do not change the core report data model unless necessary for the location improvement.
+- Do not add a database, authentication system, or real City integrations.
+- This is still a class prototype.
+
+Please make these changes:
+
+1. CREATE DISTINCT RESIDENT AND STAFF INTERFACES
+
+Create a clearer visual and workflow distinction between the resident reporting experience and the staff review experience.
+
+RESIDENT SIDE:
+- The resident should primarily see pages/actions related to submitting and tracking their own report.
+- Use plain language designed for a person making a report.
+- The resident should not see staff-only editing controls, approval/rejection controls, or internal review controls.
+- The resident should be able to submit a report, see the status/workflow of their own report, and understand what information is still needed.
+
+STAFF SIDE:
+- Staff should have a separate review-oriented interface.
+- Staff should see the report queue/inbox and the AI-generated draft.
+- Staff should be able to review/edit fields, see missing information, review contradiction/hazard flags, request more information, reject a recommendation, or approve when appropriate.
+- Clearly label the staff interface as a staff/reviewer workspace.
+- Keep the existing human-review requirement.
+
+Do not create fake security claims. This is still a prototype, so the interface separation is primarily a UX/workflow distinction.
+
+2. IMPROVE THE LOCATION INPUT
+
+Change the resident report field currently asking something like "Where did you notice it?" so that it encourages a much more precise location.
+
+Use a clearer label such as:
+
+"Where did you notice the issue?"
+
+Add helpful guidance beneath it:
+
+"Enter the street address if known. You can also provide the nearest intersection, cross street, landmark, or bus stop."
+
+Add an example/placeholder such as:
+
+"Example: 200 E Santa Clara St, near the intersection with S 3rd St"
+
+The goal is to make residents provide enough location information for a reviewer to locate the reported issue.
+
+Do not invent an address or automatically treat a vague location as an exact address.
+
+If the resident only provides a vague location such as "Downtown San José," continue treating the exact address as missing information.
+
+3. CHANGE THE TOP NAVIGATION LABEL
+
+The current navigation label "Resident report" is confusing.
+
+Change it to:
+
+"Make a Report"
+
+This should clearly communicate that this is where a resident goes to submit a new report.
+
+Keep "My Report" for viewing/tracking the resident's submitted report.
+
+Make sure the navigation labels are consistent across the resident interface.
+
+4. CHANGE "AI Structured" TO "In Progress"
+
+Where the resident-facing workflow currently displays the status/label:
+
+"AI Structured"
+
+change the resident-facing label to:
+
+"In Progress"
+
+This should be clearer for a resident who does not need to understand the internal AI workflow terminology.
+
+IMPORTANT:
+- Staff/internal views can still use "AI Draft" or other appropriate internal terminology where useful.
+- Do not expose unnecessary internal AI terminology to residents.
+- Do not change the underlying status logic just to rename the display label.
+- The existing contradiction/clarification workflow must continue to work.
+
+5. VISUAL CONSISTENCY
+
+Make the resident interface feel like a simple public reporting service and the staff interface feel like an internal review workspace.
+
+Use the existing CIVICCLEAR visual design, typography, spacing, and components rather than redesigning the entire application.
+
+After making the changes:
+- Run the existing typecheck/tests.
+- Make sure resident report submission still works.
+- Make sure the staff review workflow still works.
+- Make sure contradiction detection and hazard detection still work.
+- Make sure the "In Progress" label is only a display-label change and does not break the underlying workflow.
+- Make sure the location field still allows vague locations but correctly flags missing precise location information.

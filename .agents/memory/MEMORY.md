@@ -1,1 +1,3 @@
 - [Workflow stage meaning](workflow-stage-meaning.md) — completing the missing-information check means gaps were identified, not resolved; only human action completes the decision.
+- [Report clarification policy](report-clarification-policy.md) — retain contradictory statements and prior evidence; verification covers reviewed values and becomes invalid after material edits.
+- [Prototype interface boundary](prototype-interface-boundary.md) — resident/staff separation is UX-only, not authorization; retain the class-prototype scope.

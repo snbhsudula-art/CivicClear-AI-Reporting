@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: civicclear
+    description: Resident report contradiction analysis
 paths:
   /healthz:
     get:
@@ -24,8 +26,194 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /civicclear/analyze:
+    post:
+      operationId: analyzeCivicReport
+      tags: [civicclear]
+      summary: Analyze a resident report for contradictions and missing information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CivicReportAnalysisInput"
+      responses:
+        "200":
+          description: Contradiction analysis and a safely gated draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CivicReportAnalysis"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          description: Per-IP rate limit or global analysis concurrency limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: The AI provider returned an invalid or unusable analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: AI analysis is temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 components:
   schemas:
+    CivicReportAnalysisInput:
+      type: object
+      additionalProperties: false
+      properties:
+        description:
+          type: string
+          maxLength: 6000
+          description: Untrusted narrative description, kept separate from the labeled form fields.
+        location:
+          type: string
+          maxLength: 300
+          description: Explicit labeled location input; empty, Not sure, or Unknown means missing.
+        issueType:
+          type: string
+          maxLength: 120
+          description: Explicit labeled issue type input; empty, Not sure, or Unknown means missing.
+        urgency:
+          type: string
+          maxLength: 120
+          description: Explicit labeled urgency input; empty, Not sure, or Unknown means missing.
+        observedAt:
+          type: string
+          maxLength: 120
+          description: Explicit labeled event date/time input; empty, Not sure, or Unknown means missing.
+        requestedDepartment:
+          type: string
+          maxLength: 120
+          description: Explicit labeled requested department input; empty, Not sure, or Unknown means missing.
+        danger:
+          type: string
+          maxLength: 120
+          description: Explicit labeled safety/danger input; empty, Not sure, or Unknown means missing.
+      required:
+        - description
+        - location
+        - issueType
+        - urgency
+        - observedAt
+        - requestedDepartment
+        - danger
+    CivicReportAssessment:
+      type: object
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+          enum: [urgency, location, date, issue, department, danger]
+        state:
+          type: string
+          enum: [consistent, uncertain, missing]
+        evidence:
+          type: array
+          items:
+            type: string
+        explanation:
+          type: string
+        question:
+          type: string
+      required: [field, state, evidence, explanation, question]
+    CivicReportDraft:
+      type: object
+      additionalProperties: false
+      properties:
+        issue:
+          type: string
+        location:
+          type: string
+        issueType:
+          type: string
+        urgency:
+          type: string
+        description:
+          type: string
+        observedAt:
+          type: string
+        department:
+          type: string
+        danger:
+          type: string
+      required:
+        - issue
+        - location
+        - issueType
+        - urgency
+        - description
+        - observedAt
+        - department
+        - danger
+    CivicReportSafetyConcern:
+      type: object
+      additionalProperties: false
+      properties:
+        possibleHazard:
+          type: boolean
+          description: Whether AI semantic review finds a possible hazardous-material or related high-consequence safety concern; this is not a definitive hazard finding.
+        recommendedUrgency:
+          type: string
+          enum: [None, Medium, High]
+          description: None when no concern is identified; otherwise at least Medium, with High for reported leaks, strong fumes, possible exposure, or fire risk.
+        evidence:
+          type: array
+          items:
+            type: string
+          description: Literal, source-aligned excerpts only from the narrative description or danger field.
+        explanation:
+          type: string
+      required: [possibleHazard, recommendedUrgency, evidence, explanation]
+    CivicReportAnalysis:
+      type: object
+      additionalProperties: false
+      properties:
+        analysisVersion:
+          type: integer
+          const: 1
+        assessments:
+          type: array
+          minItems: 6
+          maxItems: 6
+          items:
+            $ref: "#/components/schemas/CivicReportAssessment"
+        draft:
+          $ref: "#/components/schemas/CivicReportDraft"
+        missingInformation:
+          type: array
+          items:
+            type: string
+        routingBlocked:
+          type: boolean
+        safetyConcern:
+          $ref: "#/components/schemas/CivicReportSafetyConcern"
+      required:
+        - analysisVersion
+        - assessments
+        - draft
+        - missingInformation
+        - routingBlocked
+        - safetyConcern
+    ApiError:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+      required: [error]
     HealthStatus:
       type: object
       properties:
