@@ -20,3 +20,9 @@ Preserve the resident's requested urgency as source input, but let reported high
 **Why:** Copying a low resident-selected urgency over a safety assessment, or replacing an unverified hazard with a generic missing-value label, hides the concern a human needs to prioritize.
 
 **How to apply:** Keep source quotes and the original recommendation available after human review. Elevating urgency does not resolve uncertainty, authorize routing, or make the final decision; a human must verify the reported concern.
+
+Use qualitative, evidence-backed assessment labels rather than an AI confidence percentage. Report Readiness is a separate completeness measure, not a probability that the analysis is correct.
+
+**Why:** The user explicitly removed numerical AI confidence from the prototype. Reusing completeness as confidence would suggest certainty that the system does not independently establish.
+
+**How to apply:** When expanding analysis displays, retain uncertainty, source evidence, and human-review requirements. Do not introduce numerical confidence or relabel readiness as accuracy.

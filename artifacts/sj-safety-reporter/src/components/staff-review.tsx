@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useAnalyzeCivicReport } from '@workspace/api-client-react';
 import { Check, CircleHelp, Pencil, X } from 'lucide-react';
+import { AIAnalysis } from './ai-analysis';
 import { ContradictionCheck } from './contradiction-check';
 import {
   applyAnalysis, clarificationQuestions, departmentDisplay, isClear, recordClarification, routingHeld, saveHumanDraftEdits,
@@ -87,6 +88,7 @@ export function StaffReview({ load, storageKey, timeline, readiness }: Props) {
           <div className="p-5 md:p-7">
             {timeline(selected)}
             <div className="mt-6">{readiness(selected)}</div>
+            <div className="mt-6"><AIAnalysis key={selected.id} report={selected} /></div>
             <ContradictionCheck key={selected.id} report={selected} onResolve={editing || checkingId ? undefined : resolve} onAnalyze={editing ? undefined : analyzeExisting} analyzing={checkingId === selected.id} error={error} />
             <details className="mb-7 rounded-xl border border-slate-200 p-4" data-testid="details-original-report"><summary className="cursor-pointer font-semibold text-slate-800">Original resident report (unchanged)</summary><blockquote className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">{selected.description}</blockquote><p className="mt-3 text-xs text-slate-600">Original location: {selected.location || 'Missing'} · Urgency: {selected.urgency || 'Missing'} · Issue type: {selected.issueType || 'Missing'}</p><p className="mt-2 text-xs text-slate-600">Date: {selected.sourceObservedAt || 'Not separately supplied'} · Danger: {selected.sourceDanger || 'Not separately supplied'} · Department: {selected.requestedDepartment || 'Not separately supplied'}</p></details>
             <h3 className="mb-5 font-bold text-slate-900">Draft fields · subject to human review</h3>

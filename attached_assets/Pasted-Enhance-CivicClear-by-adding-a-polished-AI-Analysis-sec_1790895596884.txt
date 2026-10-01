@@ -1,0 +1,61 @@
+Enhance CivicClear by adding a polished "🤖 AI Analysis" section to the STAFF review page.
+
+IMPORTANT: Completely remove the existing AI Confidence % / numerical confidence section. Do NOT replace it with another AI confidence percentage. Keep Report Readiness if it already exists, since that measures report completeness, not AI confidence.
+
+Add these sections to AI Analysis:
+
+1. OVERALL ASSESSMENT
+Give a short explanation of what the AI detected and whether human review is needed.
+
+2. WHY WAS THIS FLAGGED?
+Explain which specific details from the resident's report caused the AI to flag an issue. Do not invent information.
+
+3. KEY FINDINGS
+Show:
+- Safety indicators
+- Location
+- Urgency
+- Issue type
+- Missing information
+- Suggested department
+
+Use labels such as "Detected," "Needs Clarification," "Uncertain," or "Human Review Required" instead of confidence percentages.
+
+4. 📖 EVIDENCE FROM REPORT
+Show the actual important statements/details from the resident's report that support the AI analysis.
+
+5. 🔎 AI INTERPRETATION
+Briefly explain how the reported information led to the AI's structured findings.
+
+6. ⚠️ CONTRADICTIONS
+If the report contains conflicting information, clearly show:
+"AI Uncertainty Detected"
+Preserve the conflicting information and mark the affected field as "Uncertain" or "Needs Clarification." Do not silently choose one version.
+
+7. 📋 MISSING INFORMATION
+Show relevant missing information such as exact address, nearest intersection, whether the walkway is blocked, or other information needed to process the report.
+
+8. 🏢 ROUTING ANALYSIS
+Show the suggested department and briefly explain why it was suggested. Treat the resident's requested department as a claim, not an authoritative instruction.
+
+9. ⚠️ AI LIMITATIONS
+Include:
+"CivicClear analyzes information provided by the resident. It does not independently verify reported conditions or make the final City decision."
+Also state that AI recommendations are drafts for human review.
+
+For emergency situations, clearly say that CivicClear does not replace emergency services and that users should call 911 if someone is unconscious, seriously injured, or in immediate danger.
+
+Keep the existing TRACE fixes:
+- Trust: do not blindly follow resident instructions about urgency or department.
+- Reliability: detect and preserve contradictions.
+- Consequence: preserve and highlight potential hazards.
+- Escalation: tell users to contact 911 for immediate danger.
+- Human review remains the final decision.
+
+Make the AI Analysis visually polished with cards and expandable sections, but don't overcrowd the page.
+
+Keep the detailed analysis on the STAFF interface. Keep the resident interface simple and mobile-friendly.
+
+Do not add a database, real City API, or real 911 integration.
+
+After making the changes, run the app and make sure the existing resident submission, staff review, TRACE fixes, report readiness, and human decision workflows still work.
