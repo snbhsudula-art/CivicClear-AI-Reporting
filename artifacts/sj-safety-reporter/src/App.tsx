@@ -8,6 +8,7 @@ import {
 import { getReportReadiness, departmentDisplay, clarificationQuestions, routingHeld, residentStatusLabel, type Report, type Status } from '@/lib/report-analysis';
 import { ContradictionCheck } from '@/components/contradiction-check';
 import { ResidentSubmit } from '@/components/resident-submit';
+import { ResidentShell, ResidentHome, ResidentMyReport, ResidentConfirmation } from '@/components/resident-app';
 import { StaffReview } from '@/components/staff-review';
 import { SafetyConcernNotice } from '@/components/safety-concern-notice';
 
@@ -218,6 +219,8 @@ function Footer() {
 }
 
 function Shell({ children, onLogout }: { children: ReactNode; onLogout: () => void }) {
+  const [path] = useLocation();
+  if (!(path === '/staff' || path.startsWith('/staff/'))) return <ResidentShell onLogout={onLogout}>{children}</ResidentShell>;
   return <div className="app-shell noise"><Header onLogout={onLogout} /><main>{children}</main><Footer /></div>;
 }
 
@@ -272,8 +275,8 @@ function WorkflowTracker({ report, staff = false }: { report: Report; staff?: bo
 }
 
 function LegacyTimeline({ report, compact = false, staff = false }: { report: Report; compact?: boolean; staff?: boolean }) {
-  const steps = ['Report Submitted', staff ? 'AI Draft' : 'In Progress', staff ? 'Human Review' : 'Under Review', 'Approved'];
-  const complete = report.status === 'Human Approved' ? 4 : report.status === 'Recommendation Rejected' ? 3 : report.status === 'More Information Requested' ? 3 : report.status === 'Human Review' ? 3 : report.status === 'AI Structured' ? 2 : 1;
+  const steps = ['Report Submitted', staff ? 'AI Draft' : 'In Progress', staff ? 'Human Review' : 'Under Review', 'Decision'];
+  const complete = report.status === 'Human Approved' || report.status === 'Recommendation Rejected' ? 4 : report.status === 'More Information Requested' ? 3 : report.status === 'Human Review' ? 3 : report.status === 'AI Structured' ? 2 : 1;
   return <div className={`${compact ? '' : 'card p-5 md:p-7'}`}><div className="mb-5 flex items-center justify-between"><h2 className="font-bold text-[#284b55]">Report timeline</h2><span className="text-xs font-semibold text-[#71807d]">{complete} of 4 steps</span></div><div className={`${compact ? 'grid gap-3' : 'grid gap-5 sm:grid-cols-4'}`}>{steps.map((step, index) => { const done = index < complete; const active = index === complete - 1; return <div key={step} className={`relative ${!compact && index < 3 ? 'after:hidden after:absolute after:left-[calc(50%+23px)] after:right-[calc(-50%+23px)] after:top-4 after:h-px after:bg-[#c5d6d1] sm:after:block' : ''}`}><div className={`relative z-[1] flex items-center gap-3 ${!compact ? 'sm:flex-col sm:text-center' : ''}`}><span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 ${done ? 'border-[#33717c] bg-[#33717c] text-[#f8f3e8]' : 'border-[#bdccc7] bg-[#f8f3e8] text-[#8b9995]'}`}>{done ? <Check size={15} /> : <span className="text-xs">{index + 1}</span>}</span><span className={`${active ? 'font-bold text-[#1f5362]' : done ? 'font-semibold text-[#536a6d]' : 'text-[#8b9894]'} text-sm`}>{step}</span></div></div>; })}</div>{report.status === 'More Information Requested' && <p className="mt-5 border-t border-[#d8dfda] pt-4 text-xs font-semibold text-[#8a631c]">Waiting for more information from the resident.</p>}{report.status === 'Recommendation Rejected' && <p className="mt-5 border-t border-[#d8dfda] pt-4 text-xs font-semibold text-[#873d34]">The recommendation was rejected by a human reviewer.</p>}</div>;
 }
 
@@ -328,7 +331,7 @@ function NotFound() {
 }
 
 function Router({ onLogout }: { onLogout: () => void }) {
-  return <Shell onLogout={onLogout}><Switch><Route path="/" component={Home} /><Route path="/submit" component={Submit} /><Route path="/confirmation" component={Confirmation} /><Route path="/my-report" component={MyReport} /><Route path="/staff" component={Staff} /><Route component={NotFound} /></Switch></Shell>;
+  return <Shell onLogout={onLogout}><Switch><Route path="/">{() => <ResidentHome load={loadReports} />}</Route><Route path="/submit" component={Submit} /><Route path="/confirmation">{() => <ResidentConfirmation load={loadReports} explain={r => <BeforeAfterAI report={r} />} />}</Route><Route path="/my-report">{() => <ResidentMyReport load={loadReports} explain={r => <BeforeAfterAI report={r} />} />}</Route><Route path="/staff" component={Staff} /><Route component={NotFound} /></Switch></Shell>;
 }
 
 function LoginScreen({ onAuthenticated }: { onAuthenticated: () => void }) {

@@ -1,0 +1,71 @@
+Redesign CivicClear so the RESIDENT side looks and feels like a modern mobile app rather than a traditional website.
+
+IMPORTANT: Keep all existing functionality, data, TRACE fixes, AI Analysis, and staff review features working exactly as they currently do.
+
+RESIDENT MOBILE APP:
+- Make the resident experience mobile-first and app-like.
+- Use a full-screen mobile layout with rounded cards, clean spacing, large touch-friendly buttons, and simple icons.
+- Avoid the appearance of a desktop website squeezed onto a phone.
+- Minimize traditional website elements such as large navigation bars, excessive empty space, and desktop-style forms.
+- Use a compact app header with the CivicClear logo/name.
+- Add a bottom navigation bar with:
+  Home
+  Make a Report
+  My Report
+
+MAKE A REPORT:
+Create a simple step-by-step mobile reporting flow:
+
+Step 1: What happened?
+Step 2: Where did you notice it?
+Step 3: How urgent is it?
+Step 4: Review your report
+Step 5: Submit
+
+Each step should have one clear purpose and large touch-friendly controls.
+
+LOCATION:
+Improve the location screen with:
+"Where did you notice the issue?"
+Helper text:
+"Enter the address if you know it. You can also provide a nearby intersection, landmark, or bus stop."
+Use a large location input and make it easy to understand.
+
+MY REPORT:
+Create an app-style tracking screen showing:
+
+✓ Report Submitted
+✓ In Progress
+● Human Review
+○ Decision
+
+Show the current status clearly and explain what is happening.
+
+HOME:
+Create a simple app home screen with:
+- Make a Report button
+- Current report/status if the user has an active report
+- Short explanation of what CivicClear does
+- Emergency reminder that CivicClear does not replace 911
+
+STAFF INTERFACE:
+Keep the staff review interface separate from the resident interface. Staff can continue using a more detailed desktop/tablet layout with the AI Analysis, AI Decision Trail, contradictions, hazards, missing information, routing analysis, and human review controls.
+
+DESIGN:
+Make CivicClear feel like a polished civic mobile application similar to a modern government/service app:
+- Mobile-first
+- Clean cards
+- Rounded corners
+- Large buttons
+- Clear typography
+- Minimal clutter
+- Easy one-handed navigation
+- Smooth transitions between steps
+- Responsive on phone, tablet, and desktop
+- No horizontal scrolling
+
+Do NOT add a database, real City integrations, or unnecessary features.
+
+Preserve all existing TRACE fixes and the existing AI Analysis. Do not bring back the AI Confidence percentage.
+
+After making the changes, run the app and verify that submitting a report, tracking a report, staff review, AI Analysis, contradiction detection, hazard detection, and human decision workflows still work.

@@ -1,79 +1,87 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAnalyzeCivicReport } from '@workspace/api-client-react';
-import { AlertTriangle, ArrowRight, FileText, Paperclip, Sparkles } from 'lucide-react';
-import { applyAnalysis, type Report } from '@/lib/report-analysis';
+import { ArrowLeft, ArrowRight, Paperclip, Pencil, Sparkles } from 'lucide-react';
+import type { Report } from '@/lib/report-analysis';
+import { RESIDENT_STEPS, createResidentReport, residentAnalysisInput, validateResidentStep, type ResidentFormState } from '@/lib/resident-experience';
+import { EmergencyNote } from '@/components/resident-app';
+import '@/components/resident.css';
 
 export function ResidentSubmit({ sample, onSave }: { sample: Report; onSave: (report: Report) => void }) {
   const [, navigate] = useLocation();
   const analysis = useAnalyzeCivicReport();
-  const [form, setForm] = useState({
-    residentName: sample.residentName, description: sample.description, location: sample.location,
-    issueType: sample.issueType, urgency: sample.urgency, observedAt: '', requestedDepartment: '', danger: 'Not sure',
-  });
+  const [form, setForm] = useState<ResidentFormState>({ residentName: '', description: '', location: '', issueType: 'Other', urgency: 'Not sure', observedAt: '', requestedDepartment: '', danger: 'Not sure' });
+  const [step, setStep] = useState(0);
   const [photo, setPhoto] = useState('');
   const [error, setError] = useState('');
   const [consent, setConsent] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const update = (field: keyof typeof form, value: string) => setForm(current => ({ ...current, [field]: value }));
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!consent || processing) return;
-    setProcessing(true); setError('');
+  const busy = useRef(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const first = useRef(true);
+  const update = (f: keyof ResidentFormState, v: string) => setForm(c => ({ ...c, [f]: v }));
+  useEffect(() => { if (first.current) { first.current = false; return; } heading.current?.focus(); window.scrollTo({ top: 0 }); }, [step]);
+
+  const next = () => {
+    const problem = validateResidentStep(step, form);
+    if (problem) { setError(problem); return; }
+    setError(''); setStep(s => Math.min(4, s + 1));
+  };
+  const back = () => { setError(''); setStep(s => Math.max(0, s - 1)); };
+  const submit = async () => {
+    if (busy.current || !consent) return;
+    const problem = validateResidentStep(4, form);
+    if (problem) { setError(problem); return; }
+    busy.current = true; setProcessing(true); setError('');
     try {
-      const { residentName: _name, ...input } = form;
-      const result = await analysis.mutateAsync({ data: input });
-      const report: Report = {
-        ...sample, ...form, id: `SJSR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
-        submittedAt: new Date().toISOString(), sourceObservedAt: form.observedAt,
-        sourceDanger: form.danger, analysis: undefined, resolutions: {},
-      };
-      onSave(applyAnalysis(report, result));
+      const result = await analysis.mutateAsync({ data: residentAnalysisInput(form) });
+      onSave(createResidentReport(sample, form, result, `SJSR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, new Date().toISOString()));
       navigate('/confirmation');
     } catch (failure) {
-      const message = failure instanceof Error ? failure.message : 'Unknown analysis error.';
-      setError(`The AI check did not finish, so no draft was created or routed. Your form is retained. Please retry. ${message}`);
-    } finally { setProcessing(false); }
+      const message = failure instanceof Error ? failure.message : 'Unknown error.';
+      setError(`Your report was not saved or routed. Your answers are kept. Please retry. ${message}`);
+    } finally { busy.current = false; setProcessing(false); }
   };
-  if (processing) return <div className="shell-width flex min-h-[65vh] items-center justify-center py-16">
-    <div className="card w-full max-w-xl p-8 text-center" role="status" aria-live="polite">
-      <Sparkles className="pulse-dot mx-auto text-blue-800" size={30} />
-      <h1 className="display mt-5 text-3xl text-slate-900">Checking contradictions before drafting…</h1>
-      <p className="mt-4 text-sm leading-6 text-slate-700">AI is comparing urgency, location, date, issue details, department, and danger. Conflicts will be preserved, not guessed away.</p>
-      <p className="mt-3 text-xs text-slate-600">This can take up to a minute. No routing or human decision is happening.</p>
-    </div>
-  </div>;
-  return <div className="page-enter shell-width py-12 md:py-16">
-    <p className="eyebrow text-blue-800">Make a Report · resident reporting</p>
-    <h1 className="display mt-2 text-4xl text-slate-900">What needs attention?</h1>
-    <p className="mt-3 max-w-2xl leading-7 text-slate-600">Describe only what you know. Unclear or conflicting details will become clarification questions—not assumed facts.</p>
-    <div className="mt-8 grid gap-7 lg:grid-cols-[1fr_330px]">
-      <form onSubmit={submit} className="card p-5 md:p-8">
-        <h2 className="mb-6 flex items-center gap-2 font-bold text-slate-900"><FileText size={19} />Report details</h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          <div><label className="field-label" htmlFor="residentName">Your name</label><input id="residentName" className="field-input" maxLength={150} value={form.residentName} onChange={e => update('residentName', e.target.value)} data-testid="input-resident-name" /></div>
-          <div><label className="field-label" htmlFor="location">Where did you notice the issue?</label><input id="location" className="field-input" maxLength={300} value={form.location} placeholder="Example: 200 E Santa Clara St, near the intersection with S 3rd St" aria-describedby="location-guidance" onChange={e => update('location', e.target.value)} data-testid="input-location" /><span id="location-guidance" className="field-hint">Enter the street address if known. You can also provide the nearest intersection, cross street, landmark, or bus stop.</span></div>
-        </div>
-        <div className="mt-6"><label className="field-label" htmlFor="description">What did you observe?</label><textarea id="description" className="field-input min-h-[145px]" maxLength={6000} value={form.description} onChange={e => update('description', e.target.value)} data-testid="input-description" required /><span className="field-hint">Include relevant details even if they conflict. AI cannot independently verify them.</span></div>
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <div><label className="field-label" htmlFor="issueType">Issue type</label><select id="issueType" className="field-input" value={form.issueType} onChange={e => update('issueType', e.target.value)} data-testid="select-issue-type"><option>Trash / debris</option><option>Blocked sidewalk</option><option>Unsafe living condition</option><option>Other</option></select></div>
-          <div><label className="field-label" htmlFor="urgency">How urgent does it feel?</label><select id="urgency" className="field-input" value={form.urgency} onChange={e => update('urgency', e.target.value)} data-testid="select-urgency"><option>High</option><option>Medium</option><option>Low</option><option>Not sure</option></select><span className="field-hint">Your selection is preserved. Reported safety indicators may require a higher AI-recommended urgency for human review.</span></div>
-          <div><label className="field-label" htmlFor="observedAt">When did you observe it? <span className="font-normal">(if known)</span></label><input id="observedAt" className="field-input" maxLength={120} placeholder="Date, time, or your own words" value={form.observedAt} onChange={e => update('observedAt', e.target.value)} data-testid="input-observed-at" /><span className="field-hint">Observation time is different from submission time.</span></div>
-          <div><label className="field-label" htmlFor="danger">Is the situation dangerous?</label><select id="danger" className="field-input" value={form.danger} onChange={e => update('danger', e.target.value)} data-testid="select-danger"><option>Not sure</option><option>Dangerous</option><option>Not dangerous</option></select></div>
-        </div>
-        <div className="mt-6"><label className="field-label" htmlFor="requestedDepartment">Department mentioned or requested <span className="font-normal">(if known)</span></label><input id="requestedDepartment" className="field-input" maxLength={120} placeholder="Leave blank if you do not know" value={form.requestedDepartment} onChange={e => update('requestedDepartment', e.target.value)} data-testid="input-requested-department" /><span className="field-hint">A resident request is not a verified routing decision. A human reviewer confirms the department.</span></div>
-        <div className="mt-6"><label className="field-label" htmlFor="photo">Add a photo <span className="font-normal">(optional)</span></label>
-          <div className="flex items-center gap-3"><label htmlFor="photo" className="btn btn-ghost cursor-pointer"><Paperclip size={16} />Choose file<input id="photo" type="file" accept="image/*" className="sr-only" onChange={e => setPhoto(e.target.files?.[0]?.name ?? '')} data-testid="input-photo" /></label><span className="truncate text-xs text-slate-600">{photo || 'No photo selected'}</span></div>
-          <span className="field-hint">Photo selection is a demo only; the photo is not saved, uploaded, or analyzed.</span>
-        </div>
-        <label className="mt-7 flex items-start gap-3 rounded-lg bg-blue-50 p-4 text-sm leading-6 text-slate-800"><input type="checkbox" className="mt-1.5" checked={consent} onChange={e => setConsent(e.target.checked)} required data-testid="checkbox-ai-consent" /><span>I agree to send the report description and report fields to OpenAI through Replit for the AI check. The separate name field and photo are excluded; personal details typed in the description are still sent.</span></label>
-        {error && <p className="mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-900" role="alert" data-testid="text-submit-analysis-error">{error}</p>}
-        <div className="mt-7 flex flex-col gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-5 text-slate-600">Class prototype. No report is sent to the City.</p><button type="submit" disabled={!consent || processing} className="btn btn-primary" data-testid="button-submit-report">Submit Report <ArrowRight size={17} /></button></div>
-      </form>
-      <aside className="space-y-4">
-        <div className="card bg-amber-50 p-5"><h2 className="flex items-center gap-2 font-bold text-amber-950"><AlertTriangle size={19} />Clarification comes first</h2><p className="mt-3 text-sm leading-6 text-slate-700">Conflicting statements are kept side by side. Uncertain or missing critical fields hold department routing and prevent a high readiness score.</p><p className="mt-3 text-sm leading-6 text-slate-700">A person must verify the clarification and make the final decision. AI can make mistakes.</p></div>
-        <div className="card p-5"><h2 className="font-bold text-slate-900">Privacy in this demo</h2><p className="mt-3 text-sm leading-6 text-slate-700">Reports and review history are saved in this browser. Report text is sent to the AI provider for analysis; it is not sent to the City. Use synthetic examples and avoid personal or sensitive details.</p></div>
-      </aside>
-    </div>
+  const onFormSubmit = (e: React.FormEvent) => { e.preventDefault(); if (step < 4) next(); };
+
+  const review: Array<[string, string, number]> = [['Name', form.residentName, 0], ['What happened', form.description, 0], ['Issue type', form.issueType, 0], ['Where', form.location, 1], ['When observed', form.observedAt, 1], ['Photo (demo only, not uploaded)', photo, 1], ['Urgency', form.urgency, 2], ['Dangerous?', form.danger, 2], ['Department mentioned', form.requestedDepartment, 2]];
+
+  return <div className="page-enter">
+    <p className="r-eyebrow" style={{ color: '#194784' }}>Make a Report · Step {step + 1} of 5</p>
+    <ol className="r-steps" aria-label="Progress">{RESIDENT_STEPS.map((label, i) => <li key={label} data-state={i < step ? 'done' : i === step ? 'current' : 'todo'} data-testid={`step-indicator-${i + 1}`} aria-current={i === step ? 'step' : undefined}><span className="sr-only">{label}</span></li>)}</ol>
+    <h1 ref={heading} tabIndex={-1} style={{ fontFamily: 'var(--app-font-serif)', fontWeight: 800, letterSpacing: '-.04em', fontSize: '1.9rem', margin: '0 0 14px', outline: 'none' }} data-testid="text-step-title">{RESIDENT_STEPS[step]}</h1>
+    <p className="sr-only" role="status" aria-live="polite" data-testid="status-step">Step {step + 1} of 5: {RESIDENT_STEPS[step]}</p>
+    <form key={step} onSubmit={onFormSubmit} className="r-card r-step-panel" noValidate>
+      {step === 0 && <>
+        <div className="r-field"><label className="field-label" htmlFor="description">What did you observe?</label><textarea id="description" className="field-input" maxLength={6000} value={form.description} onChange={e => update('description', e.target.value)} data-testid="input-description" aria-invalid={!!error} /><span className="field-hint">Describe only what you know, even if details conflict. AI cannot verify them.</span></div>
+        <div className="r-field"><label className="field-label" htmlFor="issueType">Issue type</label><select id="issueType" className="field-input" value={form.issueType} onChange={e => update('issueType', e.target.value)} data-testid="select-issue-type"><option>Trash / debris</option><option>Blocked sidewalk</option><option>Unsafe living condition</option><option>Other</option></select></div>
+        <div className="r-field"><label className="field-label" htmlFor="residentName">Your name <span style={{ fontWeight: 400 }}>(optional)</span></label><input id="residentName" className="field-input" maxLength={150} value={form.residentName} onChange={e => update('residentName', e.target.value)} data-testid="input-resident-name" /><span className="field-hint">Your name is not sent to the AI check.</span></div>
+      </>}
+      {step === 1 && <>
+        <div className="r-field"><label className="field-label" htmlFor="location">Where did you notice the issue?</label><input id="location" className="field-input" maxLength={300} value={form.location} placeholder="Example: 200 E Santa Clara St, near the intersection with S 3rd St" aria-describedby="location-guidance" onChange={e => update('location', e.target.value)} data-testid="input-location" /><span id="location-guidance" className="field-hint">Enter the address if you know it. You can also provide a nearby intersection, landmark, or bus stop.</span></div>
+        <div className="r-field"><label className="field-label" htmlFor="observedAt">When did you observe it? <span style={{ fontWeight: 400 }}>(if known)</span></label><input id="observedAt" className="field-input" maxLength={120} placeholder="Date, time, or your own words" value={form.observedAt} onChange={e => update('observedAt', e.target.value)} data-testid="input-observed-at" /></div>
+        <div className="r-field"><label className="field-label" htmlFor="photo">Add a photo <span style={{ fontWeight: 400 }}>(optional)</span></label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><label htmlFor="photo" className="r-btn r-btn-ghost" style={{ cursor: 'pointer' }}><Paperclip size={16} />Choose file<input id="photo" type="file" accept="image/*" className="sr-only" onChange={e => setPhoto(e.target.files?.[0]?.name ?? '')} data-testid="input-photo" /></label><span style={{ fontSize: '.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{photo || 'No photo selected'}</span></div>
+          <span className="field-hint">Demo only. The photo is not saved, uploaded, or analyzed.</span></div>
+      </>}
+      {step === 2 && <>
+        <div className="r-field"><label className="field-label" htmlFor="urgency">How urgent does it feel?</label><select id="urgency" className="field-input" value={form.urgency} onChange={e => update('urgency', e.target.value)} data-testid="select-urgency"><option>High</option><option>Medium</option><option>Low</option><option>Not sure</option></select><span className="field-hint">Your choice is preserved. Safety indicators may lead to a higher AI recommendation for human review.</span></div>
+        <div className="r-field"><label className="field-label" htmlFor="danger">Is the situation dangerous?</label><select id="danger" className="field-input" value={form.danger} onChange={e => update('danger', e.target.value)} data-testid="select-danger"><option>Not sure</option><option>Dangerous</option><option>Not dangerous</option></select></div>
+        <details open={!!form.requestedDepartment}><summary>Department you know of (optional)</summary><div><label className="field-label" htmlFor="requestedDepartment">Department mentioned or requested</label><input id="requestedDepartment" className="field-input" maxLength={120} placeholder="Leave blank if you do not know" value={form.requestedDepartment} onChange={e => update('requestedDepartment', e.target.value)} data-testid="input-requested-department" /><span className="field-hint">A request is not a routing decision. A human reviewer confirms the department.</span></div></details>
+        <div style={{ marginTop: 14 }}><EmergencyNote /></div>
+      </>}
+      {step === 3 && <dl data-testid="review-summary">{review.map(([label, value, target]) => <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, borderBottom: '1px solid #dbe5f1', paddingBottom: 10 }}><div style={{ minWidth: 0 }}><dt>{label}</dt><dd style={{ whiteSpace: 'pre-wrap' }}>{value.trim() ? value : 'Not provided'}</dd></div><button type="button" className="r-icon-btn" style={{ flex: 'none' }} aria-label={`Edit ${label}`} onClick={() => setStep(target)}><Pencil size={16} /></button></div>)}</dl>}
+      {step === 4 && <>
+        <p style={{ fontSize: '.92rem', lineHeight: 1.6, marginTop: 0 }}>Last step. Your exact entries will be checked by AI, then saved in this browser for a demo human review. Nothing is sent to the City.</p>
+        <label style={{ display: 'flex', gap: 12, alignItems: 'start', background: '#ecf3fb', borderRadius: 14, padding: 14, fontSize: '.88rem', lineHeight: 1.55 }}><input type="checkbox" style={{ width: 22, height: 22, marginTop: 2, flex: 'none' }} checked={consent} onChange={e => setConsent(e.target.checked)} data-testid="checkbox-ai-consent" /><span>I agree to send the report description and report fields to OpenAI through Replit for the AI check. The separate name field and photo are excluded; personal details typed in the description are still sent.</span></label>
+      </>}
+      {error && <p className="r-err" role="alert" style={{ marginTop: 14 }} data-testid="text-submit-analysis-error">{error}</p>}
+      {processing && <p role="status" style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: '.88rem', marginTop: 14 }}><Sparkles size={18} className="pulse-dot" aria-hidden="true" />Checking your report. This can take up to a minute. Nothing is routed.</p>}
+      <div className="r-actions" style={{ marginTop: 18 }}>
+        {step > 0 && <button type="button" className="r-btn r-btn-ghost" onClick={back} disabled={processing} data-testid="button-report-back"><ArrowLeft size={16} />Back</button>}
+        {step < 4 ? <button key="next" type="submit" className="r-btn r-btn-solid" data-testid="button-report-next">{step === 3 ? 'Continue' : 'Next'}<ArrowRight size={16} /></button>
+          : <button key="submit" type="button" className="r-btn r-btn-solid" onClick={submit} disabled={!consent || processing} data-testid="button-submit-report">{processing ? 'Submitting…' : error ? 'Retry Submit' : 'Submit Report'}</button>}
+      </div>
+    </form>
   </div>;
 }
