@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import {
-  AlertTriangle, ArrowRight, Check, ChevronRight, ClipboardCheck, Clock3, FileText,
+  AlertTriangle, ArrowRight, Check, ChevronRight, Clock3, FileText,
   Info, MapPin, Menu, Paperclip, Pencil, Sparkles, Trash2,
   UserRound, X, CircleHelp,
 } from 'lucide-react';
@@ -11,6 +11,7 @@ import { ResidentSubmit } from '@/components/resident-submit';
 import { ResidentShell, ResidentHome, ResidentMyReport, ResidentConfirmation } from '@/components/resident-app';
 import { StaffReview } from '@/components/staff-review';
 import { SafetyConcernNotice } from '@/components/safety-concern-notice';
+import { CivicClearLogo } from '@/components/civicclear-logo';
 
 const STORAGE_KEY = 'sj-safety-reporter-reports';
 const AUTH_STORAGE_KEY = 'sj-safety-reporter-prototype-access';
@@ -200,8 +201,7 @@ function Header({ onLogout }: { onLogout: () => void }) {
   return <header className="sticky top-0 z-10 border-b border-[#cfd8d5] bg-[#f8f3e8]/95 backdrop-blur">
     <div className="shell-width flex min-h-[70px] items-center justify-between gap-4">
       <Link href={staff ? '/staff' : '/'} className="flex items-center gap-3 no-underline" onClick={() => setOpen(false)} data-testid="link-brand">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1f5362] text-[#f9e4b2]"><ClipboardCheck size={21} /></span>
-        <span><strong className="block text-base font-extrabold tracking-[-.04em] text-[#1d3c48]">CIVIC<span className="text-[#33717c]">CLEAR</span></strong><span className="block text-[.67rem] text-[#6a7778]">{staff ? 'Staff / reviewer workspace' : 'Resident reporting'} · class prototype</span></span>
+        <span><CivicClearLogo size={28} /><span className="mt-1 block text-[.67rem] text-[#6a7778]">{staff ? 'Staff / reviewer workspace' : 'Resident reporting'} · class prototype</span></span>
       </Link>
       <button className="btn btn-ghost btn-sm md:hidden" onClick={() => setOpen(!open)} aria-expanded={open} aria-label="Toggle navigation" data-testid="button-toggle-navigation">{open ? <X size={17} /> : <Menu size={17} />}</button>
       <nav className={`${open ? 'absolute left-3 right-3 top-[65px] flex' : 'hidden'} card flex-col gap-1 p-2 md:static md:flex md:flex-row md:items-center md:border-0 md:bg-transparent md:p-0 md:shadow-none`} aria-label={staff ? 'Staff navigation' : 'Resident navigation'}>
@@ -215,7 +215,7 @@ function Header({ onLogout }: { onLogout: () => void }) {
 }
 
 function Footer() {
-  return <footer className="mt-16 border-t border-[#cfd8d5] bg-[#e7eee9]"><div className="shell-width flex flex-col gap-4 py-8 text-sm text-[#52666c] md:flex-row md:items-center md:justify-between"><div><strong className="block text-sm font-extrabold tracking-[-.03em] text-[#1d3c48]">CIVICCLEAR</strong><div className="mt-2"><PrototypeMark /></div></div><p className="max-w-xl text-xs leading-5">Turn unclear reports into actionable information. Report text is sent to OpenAI for analysis; records stay in this browser. Nothing is sent to the City of San José. AI drafts require human review and clarification before routing.</p></div></footer>;
+  return <footer className="mt-16 border-t border-[#cfd8d5] bg-[#e7eee9]"><div className="shell-width flex flex-col gap-4 py-8 text-sm text-[#52666c] md:flex-row md:items-center md:justify-between"><div><CivicClearLogo size={24} /><div className="mt-2"><PrototypeMark /></div></div><p className="max-w-xl text-xs leading-5">Turn unclear reports into actionable information. Report text is sent to OpenAI for analysis; records stay in this browser. Nothing is sent to the City of San José. AI drafts require human review and clarification before routing.</p></div></footer>;
 }
 
 function Shell({ children, onLogout }: { children: ReactNode; onLogout: () => void }) {
@@ -352,12 +352,12 @@ function LoginScreen({ onAuthenticated }: { onAuthenticated: () => void }) {
   return <main className="soft-grid flex min-h-[100dvh] items-center justify-center px-5 py-12">
     <div className="page-enter w-full max-w-md">
       <div className="mb-7 flex justify-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1f5362] text-[#f9e4b2] shadow-[0_8px_0_rgba(31,83,98,.13)]"><ClipboardCheck size={28} /></span>
+        <CivicClearLogo size={56} iconOnly />
       </div>
       <section className="card p-7 md:p-9">
         <div className="text-center">
           <p className="eyebrow text-[#33717c]">Resident reporting · class prototype</p>
-          <h1 className="display mt-3 text-5xl leading-tight text-[#1e4350]">CIVICCLEAR</h1>
+          <h1 className="display mt-3 text-4xl leading-tight text-[#1e4350] sm:text-5xl">CivicClear</h1>
           <p className="mt-3 text-sm font-semibold text-[#33717c]">Turn unclear reports into actionable information.</p>
           <p className="mt-4 text-sm leading-6 text-[#617174]">Enter the prototype password to explore the resident report and human review demo. This is not an official city service.</p>
         </div>

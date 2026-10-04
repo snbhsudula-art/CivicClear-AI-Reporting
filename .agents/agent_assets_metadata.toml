@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "wdydhjDg8eHnSAtxtXJBC"
+uri = "file://artifacts/sj-safety-reporter/public/civicclear-logo.svg"
+type = "image"
+title = "CivicClear logo — SVG"
+description = "Local scalable app mark combining a location pin, checkmark, and subtle shield in navy, white, and light blue."
+logical_id = "d3158393-329d-4569-93ea-7074d22aeb1d"
+content_hash = "sha256:cc609f9f01a808c7ef0180570249406830bf8fa40ba032456dcae94fd7ecb68e"
+size = 571
+mtime_ms = 1791156448898
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:9fa23fc4-bcfa-4b73-97a0-3aba7571ee59/d3158393-329d-4569-93ea-7074d22aeb1d/73b5352f-6212-44f1-9533-e851ed917685"
+storage_version_token = "1791156691160976"
+content_type = "image/svg+xml"

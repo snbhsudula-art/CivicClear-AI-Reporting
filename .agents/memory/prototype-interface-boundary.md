@@ -14,3 +14,9 @@ Prioritize a mobile-first, app-like resident experience while keeping detailed A
 **Why:** The user explicitly requested a simple, one-handed civic reporting experience rather than a desktop website squeezed onto a phone, without losing evidence or staff review features.
 
 **How to apply:** Keep resident steps and tracking clear and touch-friendly. Simplify presentation through disclosures, not by deleting safety warnings, missing-information needs, original evidence, or human-review safeguards.
+
+CivicClear branding must not resemble an official City of San José government seal or imply government endorsement.
+
+**Why:** The user explicitly required professional civic/public-safety branding without an official-government appearance.
+
+**How to apply:** Keep future logo and branding work distinct from municipal seals, crests, and official City identifiers, and retain the class-prototype disclosures.

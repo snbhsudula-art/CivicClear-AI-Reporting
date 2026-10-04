@@ -1,10 +1,11 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
-import { AlertTriangle, ArrowRight, Check, ChevronDown, ClipboardCheck, FilePlus2, FileText, House, LogOut, MoreVertical, Info, Phone, Repeat, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Check, ChevronDown, FilePlus2, FileText, House, LogOut, MoreVertical, Info, Phone, Repeat, X } from 'lucide-react';
 import { clarificationQuestions, departmentDisplay, getReportReadiness, residentStatusLabel, routingHeld, type Report } from '@/lib/report-analysis';
 import { getResidentProgress, latestResidentReport, residentNextStepMessage } from '@/lib/resident-experience';
 import { ContradictionCheck } from '@/components/contradiction-check';
 import { SafetyConcernNotice } from '@/components/safety-concern-notice';
+import { CivicClearLogo } from '@/components/civicclear-logo';
 import './resident.css';
 
 export const SEED_ID = 'SJSR-2048';
@@ -23,7 +24,7 @@ export function ResidentShell({ children, onLogout }: { children: ReactNode; onL
   const items = [{ href: '/', label: 'Home', Icon: House }, { href: '/submit', label: 'Make a Report', Icon: FilePlus2 }, { href: '/my-report', label: 'My Report', Icon: FileText }];
   return <div className="resident-app">
     <header className="r-top"><div className="r-top-in">
-      <Link href="/" className="r-brand" onClick={() => setOpen(false)} data-testid="link-brand"><span className="r-logo"><ClipboardCheck size={18} aria-hidden="true" /></span><span>CIVIC<span style={{ color: '#275db2' }}>CLEAR</span></span></Link>
+      <Link href="/" className="r-brand" onClick={() => setOpen(false)} data-testid="link-brand"><CivicClearLogo size={34} /></Link>
       <button type="button" className="r-icon-btn" aria-label="Options menu" aria-expanded={open} aria-controls="r-options" onClick={() => setOpen(!open)} onKeyDown={e => e.key === 'Escape' && setOpen(false)} data-testid="button-toggle-navigation">{open ? <X size={20} /> : <MoreVertical size={20} />}</button>
       {open && <div id="r-options" className="r-menu" role="group" aria-label="Options" onKeyDown={e => e.key === 'Escape' && setOpen(false)}>
         <Link href="/staff" onClick={() => setOpen(false)} data-testid="link-switch-demo-view"><Repeat size={18} aria-hidden="true" /><span>Staff Workspace<small>Demo view switch, not access control</small></span></Link>

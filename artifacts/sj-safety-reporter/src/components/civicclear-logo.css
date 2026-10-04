@@ -1,0 +1,3 @@
+.civicclear-logo { display: inline-flex; align-items: center; gap: .55em; min-width: 0; color: inherit; line-height: 1; }
+.civicclear-logo__mark { flex: none; display: block; border-radius: 22%; }
+.civicclear-logo__word { font-family: var(--app-font-serif, 'Plus Jakarta Sans', 'DM Sans', sans-serif); font-weight: 800; letter-spacing: -.035em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
