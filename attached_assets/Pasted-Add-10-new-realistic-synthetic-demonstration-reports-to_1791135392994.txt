@@ -1,0 +1,24 @@
+Add 10 new realistic synthetic demonstration reports to CivicClear so that the app has at least 20 reports total.
+
+IMPORTANT:
+
+* Keep all 10 existing reports unchanged.
+* Add exactly 10 new reports, bringing the total from 10 to 20.
+* Follow the existing report data structure and use the same fields, statuses, and formatting as the current reports.
+* Make the new reports visible in the staff review dashboard and report list.
+* Give every new report a unique ID that does not conflict with existing reports.
+* Use realistic but entirely fictional resident names and report details.
+* Use locations around San José, California, including intersections, streets, parks, bus stops, and sidewalks.
+* Use varied issue types, urgency levels, and workflow statuses.
+* Include realistic missing-information cases so the AI Analysis and human review features can be demonstrated.
+* Include a variety of cases involving blocked sidewalks, trash and debris, accessibility concerns, sanitation, possible hazardous materials, damaged public infrastructure, and potential safety hazards.
+* Include at least one report with contradictory information to demonstrate the TRACE Reliability fix.
+* Include at least one report involving a potential safety hazard to demonstrate the TRACE Consequence fix.
+* Do not claim any synthetic report is a verified real-world incident.
+* Label the records as synthetic/demo data wherever appropriate.
+* Preserve all existing TRACE fixes, AI Analysis features, report readiness logic, mobile app interface, and staff review workflow.
+* Do not add a new database or connect to real City systems.
+* Check the existing storage architecture before implementing the additions. Ensure the 10 new reports persist using the app's existing storage method and do not overwrite the original reports.
+* Avoid creating duplicate reports if the initialization process runs more than once.
+
+After implementing, verify that the app displays at least 20 total reports and that the original 10 reports remain intact. Tell me where the new reports are stored and how to verify the total.
